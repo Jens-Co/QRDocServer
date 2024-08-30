@@ -1,14 +1,14 @@
 import express from "express";
-import fs from 'fs/promises';
+import fs from "fs/promises";
 import path from "path";
 import multer from "multer";
-import getFilesList from "../js/file.js";
-import { fileURLToPath } from 'url';
+import getFilesList from "../utils/file.js";
+import { fileURLToPath } from "url";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const DATA_DIR = path.join(__dirname, '../../data');
+const DATA_DIR = path.join(__dirname, "../../data");
 
 const router = express.Router();
 const upload = multer({ dest: "temp/" });
@@ -30,8 +30,6 @@ router.get("/files/*", async (req, res) => {
   }
 });
 
-
-
 const deleteDirectoryRecursively = async (directoryPath) => {
   try {
     const files = await fs.readdir(directoryPath);
@@ -40,7 +38,7 @@ const deleteDirectoryRecursively = async (directoryPath) => {
       const stat = await fs.lstat(filePath);
 
       if (stat.isDirectory()) {
-        await deleteDirectoryRecursively(filePath); 
+        await deleteDirectoryRecursively(filePath);
       } else {
         await fs.unlink(filePath);
       }
