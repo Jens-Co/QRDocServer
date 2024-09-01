@@ -1,6 +1,6 @@
 import express from "express";
 import bcrypt from "bcrypt";
-import { loadUsers, saveUsers } from "../utils/userUtils.js";
+import { loadUsers, saveUsers } from "../utils/user.js";
 
 const router = express.Router();
 
@@ -89,6 +89,36 @@ router.delete("/users/:username", isAdmin, async (req, res) => {
   } catch (error) {
     console.error("Error deleting user:", error);
     res.status(500).json({ error: "Unable to delete user" });
+  }
+});
+
+router.get("/groups", isAdmin, (req, res) => {
+  const groups = process.env.USER_GROUPS.split(",");
+  res.json(groups);
+});
+
+router.put("/users/:username/group", isAdmin, async (req, res) => {
+  const { username } = req.params;
+  const { group } = req.body;
+
+  if (!group) {
+    return res.status(400).json({ error: "Group is required" });
+  }
+
+  try {
+    const users = await loadUsers();
+    const user = users.find((user) => user.username === username);
+
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    user.group = group;
+    await saveUsers(users);
+    res.json({ success: true });
+  } catch (error) {
+    console.error("Error updating user group:", error);
+    res.status(500).json({ error: "Unable to update user group" });
   }
 });
 

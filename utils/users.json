@@ -1,12 +1,13 @@
 [
   {
-    "username": "jens",
-    "passwordHash": "$2b$10$30jH9YNTr4v6eGsOfe5kRet7qCJmQKtN8.ks098JGBliAm4gDwIi6",
-    "role": "user"
-  },
-  {
     "username": "admin",
     "passwordHash": "$2b$10$hRZf6rJsueu9U8Ue5fpOFOj2UDebD1A2gIWpdeaLZBhlp0RWaCt4i",
-    "role": "admin"
+    "role": "admin",
+    "group": "Admin"
+  },
+  {
+    "username": "jens",
+    "passwordHash": "$2b$10$LIViEb7S/mdBHtpV6laCw.quldppmE1FS9rYyVLyS/w00kBDnHr1O",
+    "role": "user"
   }
 ]

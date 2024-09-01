@@ -7,7 +7,7 @@ import bcrypt from "bcrypt";
 import { fileURLToPath } from "url";
 import apiRouter from "./routes/api.js";
 import adminRouter from "./routes/admin.js";
-import { loadUsers, saveUsers } from "./utils/userUtils.js";
+import { loadUsers, saveUsers } from "./utils/user.js";
 
 dotenv.config();
 

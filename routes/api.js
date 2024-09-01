@@ -2,53 +2,82 @@ import express from "express";
 import fs from "fs/promises";
 import path from "path";
 import multer from "multer";
-import getFilesList from "../utils/file.js";
+import { loadUsers } from "../utils/user.js";
 import { fileURLToPath } from "url";
+import {
+  initializeDefaultPermissions,
+  loadFolderPermissions,
+  updatePermissionsForNewFolder,
+} from "../utils/permission.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-
 const DATA_DIR = path.join(__dirname, "../../data");
-
 const router = express.Router();
 const upload = multer({ dest: "temp/" });
+
+const userHasAccess = (userGroups, allowedGroups) => {
+  return allowedGroups.some((group) => userGroups.includes(group));
+};
+
+let folderPermissions;
+initializeDefaultPermissions().then((perms) => {
+  folderPermissions = perms;
+  console.log("Permissions initialized.");
+});
+
+const getAccessibleFiles = async (dirPath, userGroups, folderPermissions) => {
+  const files = await fs.readdir(dirPath, { withFileTypes: true });
+  const accessibleFiles = [];
+
+  for (const file of files) {
+    const filePath = path.join(dirPath, file.name);
+    const isDirectory = file.isDirectory();
+    const relativePath = path.relative(DATA_DIR, filePath).replace(/\\/g, "/");
+    const filePermissions = folderPermissions[relativePath] || ["Default"];
+
+    if (userHasAccess(userGroups, filePermissions)) {
+      if (isDirectory) {
+        const subFiles = await getAccessibleFiles(
+          filePath,
+          userGroups,
+          folderPermissions
+        );
+        accessibleFiles.push({
+          name: file.name,
+          isDirectory: true,
+          children: subFiles,
+        });
+      } else {
+        accessibleFiles.push({ name: file.name, isDirectory: false });
+      }
+    }
+  }
+
+  return accessibleFiles;
+};
 
 router.get("/files/*", async (req, res) => {
   const subDir = req.params[0];
   const directoryPath = path.join(DATA_DIR, subDir);
+  const user = req.session.username;
 
   try {
-    const stat = await fs.lstat(directoryPath);
-    if (stat.isDirectory()) {
-      const fileList = await getFilesList(directoryPath);
-      res.json(fileList);
-    } else {
-      res.status(404).send("Not Found");
-    }
+    const users = await loadUsers();
+    const currentUser = users.find((u) => u.username === user);
+    const userGroups = currentUser ? [currentUser.group] : [];
+
+    const accessibleFiles = await getAccessibleFiles(
+      directoryPath,
+      userGroups,
+      folderPermissions
+    );
+    res.json(accessibleFiles);
   } catch (err) {
-    res.status(404).send("Not Found");
+    console.error("Error handling request:", err);
+    res.status(500).send("Internal Server Error");
   }
 });
-
-const deleteDirectoryRecursively = async (directoryPath) => {
-  try {
-    const files = await fs.readdir(directoryPath);
-    for (const file of files) {
-      const filePath = path.join(directoryPath, file);
-      const stat = await fs.lstat(filePath);
-
-      if (stat.isDirectory()) {
-        await deleteDirectoryRecursively(filePath);
-      } else {
-        await fs.unlink(filePath);
-      }
-    }
-    await fs.rmdir(directoryPath);
-  } catch (error) {
-    console.error(`Error deleting directory ${directoryPath}:`, error);
-    throw error;
-  }
-};
 
 router.delete("/files/*", async (req, res) => {
   const subDir = req.params[0];
@@ -69,12 +98,14 @@ router.delete("/files/*", async (req, res) => {
 });
 
 router.post("/files/*/create-folder", async (req, res) => {
-  const { name } = req.body;
+  const { name, groups } = req.body;
   const subDir = req.params[0];
   const folderPath = path.join(DATA_DIR, subDir, name);
 
   try {
     await fs.mkdir(folderPath, { recursive: true });
+    await updatePermissionsForNewFolder(folderPath, groups);
+
     res.json({ success: true });
   } catch (err) {
     console.error(`Error creating folder: ${err}`);
