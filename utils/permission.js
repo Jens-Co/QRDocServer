@@ -13,40 +13,42 @@ export const loadFolderPermissions = async () => {
       let data = await fs.readFile(PERMISSIONS_FILE_PATH, 'utf8');
       let folderPermissions = JSON.parse(data);
       
-      if (Array.isArray(folderPermissions)) {
+      if (typeof folderPermissions !== 'object') {
         throw new Error('Permissions file should be an object');
       }
       
       return folderPermissions;
     } catch (err) {
+      console.error("Error loading permissions:", err);
       return {};
     }
   };
   
   export const initializeDefaultPermissions = async () => {
     const folderPermissions = await loadFolderPermissions();
-  
+    
     const updatePermissionsRecursively = async (dirPath) => {
       const files = await fs.readdir(dirPath, { withFileTypes: true });
-  
+    
       for (const file of files) {
         const filePath = path.join(dirPath, file.name);
         const relativePath = path.relative(DATA_DIR, filePath).replace(/\\/g, '/');
-  
+    
         if (!folderPermissions[relativePath]) {
           folderPermissions[relativePath] = ["Default"];
         }
-  
+    
         if (file.isDirectory()) {
           await updatePermissionsRecursively(filePath);
         }
       }
     };
-  
+    
     await updatePermissionsRecursively(DATA_DIR);
     await savePermissions(folderPermissions);
     return folderPermissions;
   };
+  
   
   
 
@@ -55,10 +57,19 @@ export const savePermissions = async (permissions) => {
 };
 
 export const updatePermissionsForNewFolder = async (folderPath, groups = ["Default"]) => {
-  const permissions = await loadFolderPermissions();
-  const relativePath = path.relative(DATA_DIR, folderPath).replace(/\\/g, '/');
-  if (!permissions.some(entry => Object.keys(entry)[0] === relativePath)) {
-    permissions.push({ [relativePath]: groups });
-  }
-  await savePermissions(permissions);
+    // Resolve and normalize the folder path to ensure it's absolute
+    const absoluteFolderPath = path.resolve(folderPath).replace(/\\/g, '/');
+    console.log('Updating permissions for', absoluteFolderPath, 'with groups', groups);
+
+    const permissions = await loadFolderPermissions();
+
+    if (!permissions[absoluteFolderPath]) {
+        permissions[absoluteFolderPath] = groups;
+        console.log('New permissions:', permissions[absoluteFolderPath]);
+    } else {
+        permissions[absoluteFolderPath] = [...new Set([...permissions[absoluteFolderPath], ...groups])]; // Merge and remove duplicates
+        console.log('Updated permissions:', permissions[absoluteFolderPath]);
+    }
+    
+    await savePermissions(permissions);
 };

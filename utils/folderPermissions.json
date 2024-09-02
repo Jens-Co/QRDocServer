@@ -66,6 +66,27 @@
     "Default"
   ],
   "thisistxtinmain.txt": [
+    "Admin"
+  ],
+  "Docs/jenscasl": [
+    "Default"
+  ],
+  "index.js": [
+    "Default"
+  ],
+  "../../../../Docs": [
+    "Admin",
+    "Default"
+  ],
+  "../QRDocServer/Docs/jenscasl": [
+    "Default",
+    "Admin"
+  ],
+  "/Docs": [
+    "Admin",
+    "Default"
+  ],
+  "/Users/jenscollaert/Desktop/data/asfhaksdfhaöksdjfhlakjsdfhlakshjf": [
     "Default"
   ]
 }

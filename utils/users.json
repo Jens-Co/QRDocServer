@@ -3,7 +3,7 @@
     "username": "admin",
     "passwordHash": "$2b$10$hRZf6rJsueu9U8Ue5fpOFOj2UDebD1A2gIWpdeaLZBhlp0RWaCt4i",
     "role": "admin",
-    "group": "Admin"
+    "group": "Default"
   },
   {
     "username": "jens",

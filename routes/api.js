@@ -17,7 +17,7 @@ const router = express.Router();
 const upload = multer({ dest: "temp/" });
 
 const userHasAccess = (userGroups, allowedGroups) => {
-  return allowedGroups.some((group) => userGroups.includes(group));
+  return userGroups.includes("Admin") || allowedGroups.some((group) => userGroups.includes(group));
 };
 
 let folderPermissions;
@@ -55,6 +55,23 @@ const getAccessibleFiles = async (dirPath, userGroups, folderPermissions) => {
   }
 
   return accessibleFiles;
+};
+
+const deleteDirectoryRecursively = async (dirPath) => {
+  const files = await fs.readdir(dirPath);
+
+  for (const file of files) {
+    const filePath = path.join(dirPath, file);
+    const stat = await fs.lstat(filePath);
+
+    if (stat.isDirectory()) {
+      await deleteDirectoryRecursively(filePath);
+    } else {
+      await fs.unlink(filePath);
+    }
+  }
+
+  await fs.rmdir(dirPath);
 };
 
 router.get("/files/*", async (req, res) => {

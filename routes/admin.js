@@ -1,6 +1,7 @@
 import express from "express";
 import bcrypt from "bcrypt";
 import { loadUsers, saveUsers } from "../utils/user.js";
+import { updatePermissionsForNewFolder, loadFolderPermissions } from "../utils/permission.js";
 
 const router = express.Router();
 
@@ -119,6 +120,36 @@ router.put("/users/:username/group", isAdmin, async (req, res) => {
   } catch (error) {
     console.error("Error updating user group:", error);
     res.status(500).json({ error: "Unable to update user group" });
+  }
+});
+
+router.put("/permissions", isAdmin, async (req, res) => {
+  const { path: folderPath, groups } = req.body;
+
+  if (!folderPath || !Array.isArray(groups)) {
+    return res.status(400).json({ error: "Invalid data" });
+  }
+
+  try {
+    await updatePermissionsForNewFolder(folderPath, groups);
+    res.json({ success: true });
+  } catch (err) {
+    console.error("Error updating permissions:", err);
+    res.status(500).json({ error: "Unable to update permissions" });
+  }
+});
+
+router.get("/permissions/:path", isAdmin, async (req, res) => {
+  const { path: requestedPath } = req.params;
+
+  try {
+    const folderPermissions = await loadFolderPermissions();
+    const permissions = folderPermissions[requestedPath] || [];
+
+    res.json({ permissions });
+  } catch (err) {
+    console.error("Error fetching permissions:", err);
+    res.status(500).json({ error: "Unable to fetch permissions" });
   }
 });
 
