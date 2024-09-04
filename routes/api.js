@@ -17,6 +17,12 @@ const router = express.Router();
 const upload = multer({ dest: "temp/" });
 
 const userHasAccess = (userGroups, allowedGroups) => {
+  if (allowedGroups.includes("Default")) {
+    return true;
+  }
+  if (userGroups.includes("Admin")) {
+    return true;
+  }
   return allowedGroups.some((group) => userGroups.includes(group));
 };
 
@@ -34,6 +40,7 @@ const getAccessibleFiles = async (dirPath, userGroups, folderPermissions) => {
     const filePath = path.join(dirPath, file.name);
     const isDirectory = file.isDirectory();
     const relativePath = path.relative(DATA_DIR, filePath).replace(/\\/g, "/");
+
     const filePermissions = folderPermissions[relativePath] || ["Default"];
 
     if (userHasAccess(userGroups, filePermissions)) {
@@ -105,6 +112,7 @@ router.post("/files/*/create-folder", async (req, res) => {
   try {
     await fs.mkdir(folderPath, { recursive: true });
     await updatePermissionsForNewFolder(folderPath, groups);
+    folderPermissions = await loadFolderPermissions();
 
     res.json({ success: true });
   } catch (err) {
@@ -121,6 +129,8 @@ router.put("/files/*", async (req, res) => {
 
   try {
     await fs.rename(oldFilePath, newFilePath);
+    folderPermissions = await loadFolderPermissions();
+
     res.json({ success: true });
   } catch (err) {
     console.error(`Error renaming file: ${err}`);
@@ -136,7 +146,11 @@ router.post("/upload", upload.single("file"), async (req, res) => {
 
   try {
     await fs.mkdir(path.join(DATA_DIR, currentPath), { recursive: true });
+
     await fs.rename(tempPath, targetPath);
+
+    folderPermissions = await loadFolderPermissions();
+
     res.json({ success: true });
   } catch (err) {
     console.error(`Error handling file upload: ${err}`);

@@ -34,9 +34,6 @@ export const initializeDefaultPermissions = async () => {
 };
 
 
-
-
-
 export const loadFolderPermissions = async () => {
     try {
         let data = await fs.readFile(PERMISSIONS_FILE_PATH, 'utf8');
@@ -59,35 +56,23 @@ export const savePermissions = async (permissions) => {
 };
 
 export const updatePermissionsForNewFolder = async (folderPath, groups = ["Default"]) => {
-    // Resolve the absolute path relative to DATA_DIR
     const absoluteFolderPath = path.resolve(DATA_DIR, folderPath);
-
-    // Calculate the relative path from DATA_DIR to the target folder
     let relativeFolderPath = path.relative(DATA_DIR, absoluteFolderPath).replace(/\\/g, '/');
 
-    // Ensure the relative path does not start with any invalid characters or go beyond the root
     if (relativeFolderPath.startsWith('..')) {
-        // This indicates that the relative path calculation went wrong
-        // You can either throw an error here or correct the path
         console.error('Relative path calculated incorrectly:', relativeFolderPath);
         return;
     }
 
-    // If the path starts with a slash, remove it (since we're using relative paths)
     if (relativeFolderPath.startsWith('/')) {
         relativeFolderPath = relativeFolderPath.substring(1);
     }
 
-    console.log('Absolute Path:', absoluteFolderPath);
-    console.log('Relative Path:', relativeFolderPath);
-
     const permissions = await loadFolderPermissions();
 
-    // Update permissions for the correct relative path
     if (!permissions[relativeFolderPath]) {
-        permissions[relativeFolderPath] = groups;
+        permissions[relativeFolderPath] = [...new Set(["Default", ...groups])];
     } else {
-        // Merge the groups if permissions already exist
         permissions[relativeFolderPath] = [...new Set([...permissions[relativeFolderPath], ...groups])];
     }
 

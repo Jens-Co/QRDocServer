@@ -9,7 +9,6 @@ import { fileURLToPath } from "url";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// Define DATA_DIR in the same file if it's not imported
 const DATA_DIR = path.join(__dirname, '../../data');
 
 const router = express.Router();
@@ -67,7 +66,6 @@ router.put("/users/:username", isAdmin, async (req, res) => {
       return res.status(404).json({ error: "User not found" });
     }
 
-    // Update only the fields that are provided in the request body
     if (newUsername && newUsername !== users[userIndex].username) {
       if (users.find((user) => user.username === newUsername)) {
         return res.status(400).json({ error: "Username already exists" });
@@ -118,20 +116,12 @@ router.put("/permissions", isAdmin, async (req, res) => {
   }
 
   try {
-      console.log('Received Folder Path:', folderPath);
-
-      // Resolve the absolute path based on DATA_DIR
       let absoluteFolderPath = path.resolve(DATA_DIR, folderPath);
-
-      // Calculate the relative path from DATA_DIR to the folder
       let relativeFolderPath = path.relative(DATA_DIR, absoluteFolderPath).replace(/\\/g, '/');
 
-      // Strip any leading "../" if present
       if (relativeFolderPath.startsWith('../')) {
           relativeFolderPath = relativeFolderPath.replace(/^(\.\.\/)+/, '');
       }
-
-      console.log('Updating Permissions for:', relativeFolderPath);
 
       await updatePermissionsForNewFolder(relativeFolderPath, groups);
       res.json({ success: true });
