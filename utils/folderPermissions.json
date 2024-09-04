@@ -1,92 +1,30 @@
 {
   "jens": [
-    "Admin"
-  ],
-  "jensC": [
-    "Default"
-  ],
-  "coolboy": [
-    "Admin"
-  ],
-  "keke": [
-    "Default"
-  ],
-  ".DS_Store": [
-    "Default"
-  ],
-  "Docs": [
-    "Default"
-  ],
-  "Docs/.DS_Store": [
-    "Default"
-  ],
-  "Docs/thiasdfasdfasdfsdfqffqfqfqfsisatextfile.txt": [
-    "Default"
-  ],
-  "aaaa": [
-    "Default"
-  ],
-  "alsdkfjladsjf": [
-    "Default"
-  ],
-  "alsdkfjladsjf/metadata.json": [
-    "Default"
-  ],
-  "asasasas": [
-    "Default"
-  ],
-  "asdfjhasdkfh": [
-    "Default"
-  ],
-  "asdfkasdfh": [
-    "Default"
-  ],
-  "asdkfhasdlfkhjasf": [
-    "Default"
-  ],
-  "b": [
-    "Default"
-  ],
-  "jensC/.DS_Store": [
-    "Default"
-  ],
-  "jensC/keke": [
-    "Default"
-  ],
-  "jensC/metadata.json": [
-    "Default"
-  ],
-  "jenscollaert": [
-    "Default"
-  ],
-  "jenscollaert/metadata.json": [
-    "Default"
-  ],
-  "llalalla": [
-    "Default"
-  ],
-  "thisistxtinmain.txt": [
-    "Admin"
-  ],
-  "Docs/jenscasl": [
-    "Default"
-  ],
-  "index.js": [
-    "Default"
-  ],
-  "../../../../Docs": [
-    "Admin",
-    "Default"
-  ],
-  "../QRDocServer/Docs/jenscasl": [
     "Default",
+    "Techniekers",
     "Admin"
   ],
-  "/Docs": [
-    "Admin",
+  "jens/kjsadhfkdsjhf": [
+    "Default",
+    "Techniekers"
+  ],
+  "test": [
+    "Default",
+    "Techniekers"
+  ],
+  "test/test123": [
     "Default"
   ],
-  "/Users/jenscollaert/Desktop/data/asfhaksdfhaöksdjfhlakjsdfhlakshjf": [
+  "test/test123/index.js": [
+    "Default"
+  ],
+  "geheimvoortechniekers": [
+    "Admin"
+  ],
+  "jens/geheim": [
+    "Admin"
+  ],
+  "asdfasdf": [
     "Default"
   ]
 }

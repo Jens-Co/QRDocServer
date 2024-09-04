@@ -3,11 +3,12 @@
     "username": "admin",
     "passwordHash": "$2b$10$hRZf6rJsueu9U8Ue5fpOFOj2UDebD1A2gIWpdeaLZBhlp0RWaCt4i",
     "role": "admin",
-    "group": "Default"
+    "group": "Admin"
   },
   {
     "username": "jens",
-    "passwordHash": "$2b$10$LIViEb7S/mdBHtpV6laCw.quldppmE1FS9rYyVLyS/w00kBDnHr1O",
-    "role": "user"
+    "passwordHash": "$2b$10$49EEfSETUcjDVv.JEQ9Pb.NyJ54CHcfE43vX.p5dSE3w4LdfrkDaG",
+    "role": "user",
+    "group": "Techniekers"
   }
 ]

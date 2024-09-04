@@ -2,6 +2,15 @@ import express from "express";
 import bcrypt from "bcrypt";
 import { loadUsers, saveUsers } from "../utils/user.js";
 import { updatePermissionsForNewFolder, loadFolderPermissions } from "../utils/permission.js";
+import { loadGroups, saveGroups, addGroup, deleteGroup } from "../utils/groups.js"; // Import the group functions
+import path from "path";
+import { fileURLToPath } from "url";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+// Define DATA_DIR in the same file if it's not imported
+const DATA_DIR = path.join(__dirname, '../../data');
 
 const router = express.Router();
 
@@ -48,7 +57,7 @@ router.post("/users", isAdmin, async (req, res) => {
 
 router.put("/users/:username", isAdmin, async (req, res) => {
   const { username } = req.params;
-  const { newUsername, newPassword } = req.body;
+  const { newUsername, newPassword, group } = req.body;
 
   try {
     const users = await loadUsers();
@@ -58,7 +67,11 @@ router.put("/users/:username", isAdmin, async (req, res) => {
       return res.status(404).json({ error: "User not found" });
     }
 
-    if (newUsername) {
+    // Update only the fields that are provided in the request body
+    if (newUsername && newUsername !== users[userIndex].username) {
+      if (users.find((user) => user.username === newUsername)) {
+        return res.status(400).json({ error: "Username already exists" });
+      }
       users[userIndex].username = newUsername;
     }
 
@@ -66,10 +79,14 @@ router.put("/users/:username", isAdmin, async (req, res) => {
       users[userIndex].passwordHash = await bcrypt.hash(newPassword, 10);
     }
 
+    if (group) {
+      users[userIndex].group = group;
+    }
+
     await saveUsers(users);
     res.json({ success: true });
   } catch (error) {
-    console.error("Error updating user:", error);
+    console.error("Error updating user:", error.message);
     res.status(500).json({ error: "Unable to update user" });
   }
 });
@@ -93,51 +110,43 @@ router.delete("/users/:username", isAdmin, async (req, res) => {
   }
 });
 
-router.get("/groups", isAdmin, (req, res) => {
-  const groups = process.env.USER_GROUPS.split(",");
-  res.json(groups);
-});
-
-router.put("/users/:username/group", isAdmin, async (req, res) => {
-  const { username } = req.params;
-  const { group } = req.body;
-
-  if (!group) {
-    return res.status(400).json({ error: "Group is required" });
-  }
-
-  try {
-    const users = await loadUsers();
-    const user = users.find((user) => user.username === username);
-
-    if (!user) {
-      return res.status(404).json({ error: "User not found" });
-    }
-
-    user.group = group;
-    await saveUsers(users);
-    res.json({ success: true });
-  } catch (error) {
-    console.error("Error updating user group:", error);
-    res.status(500).json({ error: "Unable to update user group" });
-  }
-});
-
 router.put("/permissions", isAdmin, async (req, res) => {
   const { path: folderPath, groups } = req.body;
 
   if (!folderPath || !Array.isArray(groups)) {
-    return res.status(400).json({ error: "Invalid data" });
+      return res.status(400).json({ error: "Invalid data" });
   }
 
   try {
-    await updatePermissionsForNewFolder(folderPath, groups);
-    res.json({ success: true });
+      console.log('Received Folder Path:', folderPath);
+
+      // Resolve the absolute path based on DATA_DIR
+      let absoluteFolderPath = path.resolve(DATA_DIR, folderPath);
+
+      // Calculate the relative path from DATA_DIR to the folder
+      let relativeFolderPath = path.relative(DATA_DIR, absoluteFolderPath).replace(/\\/g, '/');
+
+      // Strip any leading "../" if present
+      if (relativeFolderPath.startsWith('../')) {
+          relativeFolderPath = relativeFolderPath.replace(/^(\.\.\/)+/, '');
+      }
+
+      console.log('Updating Permissions for:', relativeFolderPath);
+
+      await updatePermissionsForNewFolder(relativeFolderPath, groups);
+      res.json({ success: true });
   } catch (err) {
-    console.error("Error updating permissions:", err);
-    res.status(500).json({ error: "Unable to update permissions" });
+      console.error("Error updating permissions:", err);
+      res.status(500).json({ error: "Unable to update permissions" });
   }
 });
+
+
+
+
+
+
+
 
 router.get("/permissions/:path", isAdmin, async (req, res) => {
   const { path: requestedPath } = req.params;
@@ -150,6 +159,44 @@ router.get("/permissions/:path", isAdmin, async (req, res) => {
   } catch (err) {
     console.error("Error fetching permissions:", err);
     res.status(500).json({ error: "Unable to fetch permissions" });
+  }
+});
+
+router.get("/groups", isAdmin, async (req, res) => {
+  try {
+    const groups = await loadGroups();
+    res.json(groups);
+  } catch (error) {
+    console.error("Error fetching groups:", error);
+    res.status(500).json({ error: "Unable to fetch groups" });
+  }
+});
+
+router.post("/groups", isAdmin, async (req, res) => {
+  const { group } = req.body;
+
+  if (!group) {
+    return res.status(400).json({ error: "Group name is required" });
+  }
+
+  try {
+    await addGroup(group);
+    res.json({ success: true });
+  } catch (error) {
+    console.error("Error adding group:", error);
+    res.status(500).json({ error: "Unable to add group" });
+  }
+});
+
+router.delete("/groups/:group", isAdmin, async (req, res) => {
+  const { group } = req.params;
+
+  try {
+    await deleteGroup(group);
+    res.json({ success: true });
+  } catch (error) {
+    console.error("Error deleting group:", error);
+    res.status(500).json({ error: "Unable to delete group" });
   }
 });
 
