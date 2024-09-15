@@ -1,7 +1,7 @@
 import express from "express";
 import bcrypt from "bcrypt";
 import { loadUsers, saveUsers } from "../utils/user.js";
-import { updatePermissionsForNewFolder, loadFolderPermissions } from "../utils/permission.js";
+import { updatePermissionsForNewFolder, loadFolderPermissions, removePermissionFromFolder } from "../utils/permission.js";
 import { loadGroups, saveGroups, addGroup, deleteGroup } from "../utils/groups.js"; // Import the group functions
 import path from "path";
 import { fileURLToPath } from "url";
@@ -109,11 +109,12 @@ router.delete("/users/:username", isAdmin, async (req, res) => {
 });
 
 router.put("/permissions", isAdmin, async (req, res) => {
-  const { path: folderPath, groups } = req.body;
-
-  if (!folderPath || !Array.isArray(groups)) {
+  const { folderPath, groups } = req.body;
+  
+  if (typeof folderPath !== 'string' || folderPath.trim() === '' || !Array.isArray(groups)) {
       return res.status(400).json({ error: "Invalid data" });
   }
+  
 
   try {
       let absoluteFolderPath = path.resolve(DATA_DIR, folderPath);
@@ -130,16 +131,30 @@ router.put("/permissions", isAdmin, async (req, res) => {
       res.status(500).json({ error: "Unable to update permissions" });
   }
 });
+router.put("/permissions/remove", isAdmin, async (req, res) => {
+  let { path: folderPath, group } = req.body;
 
+  if (!folderPath || !group) {
+      return res.status(400).json({ error: "Folder path and group are required" });
+  }
 
-
-
-
+  try {
+      await removePermissionFromFolder(folderPath, group);
+      res.json({ success: true });
+  } catch (err) {
+      console.error("Error removing permission:", err);
+      res.status(500).json({ error: "Unable to remove permission" });
+  }
+});
 
 
 
 router.get("/permissions/:path", isAdmin, async (req, res) => {
-  const { path: requestedPath } = req.params;
+  let { path: requestedPath } = req.params;
+
+  requestedPath = requestedPath.replace(/^\//, "");
+
+  console.log("Requested path:", requestedPath);
 
   try {
     const folderPermissions = await loadFolderPermissions();
@@ -151,6 +166,7 @@ router.get("/permissions/:path", isAdmin, async (req, res) => {
     res.status(500).json({ error: "Unable to fetch permissions" });
   }
 });
+
 
 router.get("/groups", isAdmin, async (req, res) => {
   try {

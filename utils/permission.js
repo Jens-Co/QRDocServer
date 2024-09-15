@@ -79,3 +79,36 @@ export const updatePermissionsForNewFolder = async (folderPath, groups = ["Defau
     await savePermissions(permissions);
 };
 
+export const removePermissionFromFolder = async (folderPath, groupToRemove) => {
+    const absoluteFolderPath = path.resolve(DATA_DIR, folderPath);
+    let relativeFolderPath = path.relative(DATA_DIR, absoluteFolderPath).replace(/\\/g, '/');
+
+    if (relativeFolderPath.startsWith('../')) {
+        relativeFolderPath = relativeFolderPath.replace(/^(\.\.\/)+/, '');
+    }
+
+    if (relativeFolderPath.startsWith('/')) {
+        relativeFolderPath = relativeFolderPath.substring(1);
+    }
+
+    const permissions = await loadFolderPermissions();
+
+    if (!permissions[relativeFolderPath]) {
+        console.error(`Folder '${relativeFolderPath}' not found in permissions`);
+        return;
+    }
+
+    permissions[relativeFolderPath] = permissions[relativeFolderPath].filter(
+        (group) => group !== groupToRemove
+    );
+
+    if (permissions[relativeFolderPath].length === 0) {
+        delete permissions[relativeFolderPath];
+    }
+
+    await savePermissions(permissions);
+    console.log(`Removed group '${groupToRemove}' from folder '${relativeFolderPath}'`);
+};
+
+
+
