@@ -1,19 +1,21 @@
 {
-  "adminfolder": [
-    "Default",
-    "Admin"
-  ],
-  "iedereen folder": [
-    "Default"
-  ],
-  "techniekerfolder": [
-    "Default",
-    "Techniekers"
-  ],
   "iedereenfolder": [
     "Default"
   ],
   "iedereenfolder/jens": [
     "Default"
+  ],
+  "techniekerfolder": [
+    "Default",
+    "Admin"
+  ],
+  "adminfolder": [
+    "Techniekers"
+  ],
+  "engoe": [
+    "Techniekers"
+  ],
+  "LICENSE": [
+    "Admin"
   ]
 }

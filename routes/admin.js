@@ -1,15 +1,24 @@
 import express from "express";
 import bcrypt from "bcrypt";
 import { loadUsers, saveUsers } from "../utils/user.js";
-import { updatePermissionsForNewFolder, loadFolderPermissions, removePermissionFromFolder } from "../utils/permission.js";
-import { loadGroups, saveGroups, addGroup, deleteGroup } from "../utils/groups.js"; // Import the group functions
+import {
+  updatePermissionsForNewFolder,
+  loadFolderPermissions,
+  removePermissionFromFolder,
+} from "../utils/permission.js";
+import {
+  loadGroups,
+  saveGroups,
+  addGroup,
+  deleteGroup,
+} from "../utils/groups.js";
 import path from "path";
 import { fileURLToPath } from "url";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const DATA_DIR = path.join(__dirname, '../../data');
+const DATA_DIR = path.join(__dirname, "../../data");
 
 const router = express.Router();
 
@@ -110,44 +119,49 @@ router.delete("/users/:username", isAdmin, async (req, res) => {
 
 router.put("/permissions", isAdmin, async (req, res) => {
   const { folderPath, groups } = req.body;
-  
-  if (typeof folderPath !== 'string' || folderPath.trim() === '' || !Array.isArray(groups)) {
-      return res.status(400).json({ error: "Invalid data" });
+
+  if (
+    typeof folderPath !== "string" ||
+    folderPath.trim() === "" ||
+    !Array.isArray(groups)
+  ) {
+    return res.status(400).json({ error: "Invalid data" });
   }
-  
 
   try {
-      let absoluteFolderPath = path.resolve(DATA_DIR, folderPath);
-      let relativeFolderPath = path.relative(DATA_DIR, absoluteFolderPath).replace(/\\/g, '/');
+    let absoluteFolderPath = path.resolve(DATA_DIR, folderPath);
+    let relativeFolderPath = path
+      .relative(DATA_DIR, absoluteFolderPath)
+      .replace(/\\/g, "/");
 
-      if (relativeFolderPath.startsWith('../')) {
-          relativeFolderPath = relativeFolderPath.replace(/^(\.\.\/)+/, '');
-      }
+    if (relativeFolderPath.startsWith("../")) {
+      relativeFolderPath = relativeFolderPath.replace(/^(\.\.\/)+/, "");
+    }
 
-      await updatePermissionsForNewFolder(relativeFolderPath, groups);
-      res.json({ success: true });
+    await updatePermissionsForNewFolder(relativeFolderPath, groups);
+    res.json({ success: true });
   } catch (err) {
-      console.error("Error updating permissions:", err);
-      res.status(500).json({ error: "Unable to update permissions" });
+    console.error("Error updating permissions:", err);
+    res.status(500).json({ error: "Unable to update permissions" });
   }
 });
 router.put("/permissions/remove", isAdmin, async (req, res) => {
   let { path: folderPath, group } = req.body;
 
   if (!folderPath || !group) {
-      return res.status(400).json({ error: "Folder path and group are required" });
+    return res
+      .status(400)
+      .json({ error: "Folder path and group are required" });
   }
 
   try {
-      await removePermissionFromFolder(folderPath, group);
-      res.json({ success: true });
+    await removePermissionFromFolder(folderPath, group);
+    res.json({ success: true });
   } catch (err) {
-      console.error("Error removing permission:", err);
-      res.status(500).json({ error: "Unable to remove permission" });
+    console.error("Error removing permission:", err);
+    res.status(500).json({ error: "Unable to remove permission" });
   }
 });
-
-
 
 router.get("/permissions/:path", isAdmin, async (req, res) => {
   let { path: requestedPath } = req.params;
@@ -166,7 +180,6 @@ router.get("/permissions/:path", isAdmin, async (req, res) => {
     res.status(500).json({ error: "Unable to fetch permissions" });
   }
 });
-
 
 router.get("/groups", isAdmin, async (req, res) => {
   try {

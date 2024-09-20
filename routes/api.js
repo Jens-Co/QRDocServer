@@ -105,15 +105,21 @@ router.delete("/files/*", async (req, res) => {
 });
 
 router.post("/files/*/create-folder", async (req, res) => {
-  const { name, groups } = req.body;
+  const { name } = req.body;
   const subDir = req.params[0];
+  const user = req.session.username;
   const folderPath = path.join(DATA_DIR, subDir, name);
 
   try {
-    await fs.mkdir(folderPath, { recursive: true });
-    await updatePermissionsForNewFolder(folderPath, groups);
-    folderPermissions = await loadFolderPermissions();
+    const users = await loadUsers();
+    const currentUser = users.find((u) => u.username === user);
+    const userGroup = currentUser ? [currentUser.group] : [];
 
+    await fs.mkdir(folderPath, { recursive: true });
+
+    await updatePermissionsForNewFolder(folderPath, userGroup);
+
+    folderPermissions = await loadFolderPermissions();
     res.json({ success: true });
   } catch (err) {
     console.error(`Error creating folder: ${err}`);
@@ -142,15 +148,21 @@ router.post("/upload", upload.single("file"), async (req, res) => {
   const tempPath = req.file.path;
   const originalName = req.file.originalname;
   const currentPath = req.body.currentPath || "";
-  const targetPath = path.join(DATA_DIR, currentPath, originalName);
+  const user = req.session.username;
 
   try {
-    await fs.mkdir(path.join(DATA_DIR, currentPath), { recursive: true });
+    const users = await loadUsers();
+    const currentUser = users.find((u) => u.username === user);
+    const userGroup = currentUser ? [currentUser.group] : [];
 
+    const targetPath = path.join(DATA_DIR, currentPath, originalName);
+
+    await fs.mkdir(path.join(DATA_DIR, currentPath), { recursive: true });
     await fs.rename(tempPath, targetPath);
 
-    folderPermissions = await loadFolderPermissions();
+    await updatePermissionsForNewFolder(targetPath, userGroup);
 
+    folderPermissions = await loadFolderPermissions();
     res.json({ success: true });
   } catch (err) {
     console.error(`Error handling file upload: ${err}`);
