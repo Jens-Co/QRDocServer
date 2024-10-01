@@ -17,5 +17,14 @@
   ],
   "LICENSE": [
     "Admin"
+  ],
+  "README.md": [
+    "Techniekers"
+  ],
+  "REAME.md": [
+    "Default"
+  ],
+  ".DS_Store": [
+    "Default"
   ]
 }

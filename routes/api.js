@@ -3,6 +3,7 @@ import fs from "fs/promises";
 import path from "path";
 import multer from "multer";
 import { loadUsers } from "../utils/user.js";
+import getAccessibleFiles from "../utils/file.js"
 import { fileURLToPath } from "url";
 import {
   initializeDefaultPermissions,
@@ -16,53 +17,12 @@ const DATA_DIR = path.join(__dirname, "../../data");
 const router = express.Router();
 const upload = multer({ dest: "temp/" });
 
-const userHasAccess = (userGroups, allowedGroups) => {
-  if (allowedGroups.includes("Default")) {
-    return true;
-  }
-  if (userGroups.includes("Admin")) {
-    return true;
-  }
-  return allowedGroups.some((group) => userGroups.includes(group));
-};
 
 let folderPermissions;
 initializeDefaultPermissions().then((perms) => {
   folderPermissions = perms;
   console.log("Permissions initialized.");
 });
-
-const getAccessibleFiles = async (dirPath, userGroups, folderPermissions) => {
-  const files = await fs.readdir(dirPath, { withFileTypes: true });
-  const accessibleFiles = [];
-
-  for (const file of files) {
-    const filePath = path.join(dirPath, file.name);
-    const isDirectory = file.isDirectory();
-    const relativePath = path.relative(DATA_DIR, filePath).replace(/\\/g, "/");
-
-    const filePermissions = folderPermissions[relativePath] || ["Default"];
-
-    if (userHasAccess(userGroups, filePermissions)) {
-      if (isDirectory) {
-        const subFiles = await getAccessibleFiles(
-          filePath,
-          userGroups,
-          folderPermissions
-        );
-        accessibleFiles.push({
-          name: file.name,
-          isDirectory: true,
-          children: subFiles,
-        });
-      } else {
-        accessibleFiles.push({ name: file.name, isDirectory: false });
-      }
-    }
-  }
-
-  return accessibleFiles;
-};
 
 router.get("/files/*", async (req, res) => {
   const subDir = req.params[0];

@@ -211,6 +211,9 @@ router.delete("/groups/:group", isAdmin, async (req, res) => {
   const { group } = req.params;
 
   try {
+    if (group === "Default" || group === "Admin") {
+      return res.status(400).json({ error: "You cannot delete this group" });
+    }
     await deleteGroup(group);
     res.json({ success: true });
   } catch (error) {
